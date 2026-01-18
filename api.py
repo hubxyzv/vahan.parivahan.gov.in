@@ -1,148 +1,112 @@
 from flask import Flask, request, jsonify
 import requests
-import time
 
 app = Flask(__name__)
 
-# JSON settings
+# JSON Settings
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 app.config['JSON_SORT_KEYS'] = False
 
-# Authorized Keys
 ALLOWED_KEYS = ["1adcd", "2efgh", "3ijkl", "Happy", "4mnop", "darasingh"]
-
-# API Endpoints
 API_1 = "https://new-pre-vehicle-api.vercel.app/mobile"
 API_2 = "https://x-premium-vehicle.vercel.app/mobile"
 
-def validate():
+@app.route("/mobile", methods=["GET"])
+def mobile():
     key = request.args.get("key", "")
     reg = request.args.get("registration", "")
 
+    # Basic Validation
     if key not in ALLOWED_KEYS:
-        return None, jsonify({"status": "error", "message": "access key wrong"}), 401
+        return jsonify({"status": "error", "message": "access key wrong"}), 401
     if not reg:
-        return None, jsonify({"status": "error", "message": "registration number required"}), 400
-    
-    return reg, None, None
+        return jsonify({"status": "error", "message": "registration number required"}), 400
 
-@app.route("/mobile", methods=["GET"])
-def mobile():
-    reg, err, code = validate()
-    if err:
-        return err, code
+    params = {"key": key, "registration": reg}
 
-    key_used = request.args.get("key")
-    params = {"key": key_used, "registration": reg}
-    
-    # Retry Logic Settings
-    max_retries = 3
-    retry_delay = 2  # 2 seconds ka gap har retry ke beech mein
+    try:
+        # Step 1: Pehle API 2 (Full JSON) try karein
+        # Timeout 7 seconds rakha hai taki Vercel khud terminate na kare
+        r2 = requests.get(API_2, params=params, timeout=7)
+        if r2.status_code == 200:
+            data2 = r2.json()
+            # Check karein agar data empty toh nahi hai
+            if data2 and len(str(data2)) > 10: 
+                return jsonify(data2), 200
 
-    for attempt in range(max_retries):
-        try:
-            # Step 1: Check API 2 (Full Details)
-            response2 = requests.get(API_2, params=params, timeout=10)
-            if response2.status_code == 200:
-                data2 = response2.json()
-                if data2 and len(data2) > 0:
-                    return jsonify(data2), 200
+        # Step 2: Fallback to API 1 (Only Mobile)
+        r1 = requests.get(API_1, params=params, timeout=7)
+        if r1.status_code == 200:
+            data1 = r1.json()
+            m_num = data1.get("mobileNo") or data1.get("mobile_no") or data1.get("mobile")
+            if m_num:
+                return jsonify({"mobile_no": m_num}), 200
 
-            # Step 2: Fallback to API 1 (Only Mobile)
-            response1 = requests.get(API_1, params=params, timeout=10)
-            if response1.status_code == 200:
-                data1 = response1.json()
-                m_num = data1.get("mobileNo") or data1.get("mobile_no") or data1.get("mobile")
-                if m_num:
-                    return jsonify({"mobile_no": m_num}), 200
-            
-            # Agar dono API se data nahi mila, toh loop agle attempt par jayega
-            time.sleep(retry_delay)
+    except Exception as e:
+        # Log error for internal debugging (optional)
+        print(f"Error: {e}")
 
-        except Exception:
-            # Connection error aane par bhi retry karega
-            time.sleep(retry_delay)
-            continue
-
-    # Saare attempts khatam hone ke baad agar data nahi mila
+    # Agar kahin se data nahi mila
     return jsonify({
-        "status": "error",
-        "message": "no data found try another number"
+        "message": "no data found try another number",
+        "status": "error"
     }), 404
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+# Vercel requirements
+app.debug = True
 from flask import Flask, request, jsonify
 import requests
-import time
 
 app = Flask(__name__)
 
-# JSON settings
+# JSON Settings
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 app.config['JSON_SORT_KEYS'] = False
 
-# Authorized Keys
 ALLOWED_KEYS = ["1adcd", "2efgh", "3ijkl", "Happy", "4mnop", "darasingh"]
-
-# API Endpoints
 API_1 = "https://new-pre-vehicle-api.vercel.app/mobile"
 API_2 = "https://x-premium-vehicle.vercel.app/mobile"
 
-def validate():
+@app.route("/mobile", methods=["GET"])
+def mobile():
     key = request.args.get("key", "")
     reg = request.args.get("registration", "")
 
+    # Basic Validation
     if key not in ALLOWED_KEYS:
-        return None, jsonify({"status": "error", "message": "access key wrong"}), 401
+        return jsonify({"status": "error", "message": "access key wrong"}), 401
     if not reg:
-        return None, jsonify({"status": "error", "message": "registration number required"}), 400
-    
-    return reg, None, None
+        return jsonify({"status": "error", "message": "registration number required"}), 400
 
-@app.route("/mobile", methods=["GET"])
-def mobile():
-    reg, err, code = validate()
-    if err:
-        return err, code
+    params = {"key": key, "registration": reg}
 
-    key_used = request.args.get("key")
-    params = {"key": key_used, "registration": reg}
-    
-    # Retry Logic Settings
-    max_retries = 3
-    retry_delay = 2  # 2 seconds ka gap har retry ke beech mein
+    try:
+        # Step 1: Pehle API 2 (Full JSON) try karein
+        # Timeout 7 seconds rakha hai taki Vercel khud terminate na kare
+        r2 = requests.get(API_2, params=params, timeout=7)
+        if r2.status_code == 200:
+            data2 = r2.json()
+            # Check karein agar data empty toh nahi hai
+            if data2 and len(str(data2)) > 10: 
+                return jsonify(data2), 200
 
-    for attempt in range(max_retries):
-        try:
-            # Step 1: Check API 2 (Full Details)
-            response2 = requests.get(API_2, params=params, timeout=10)
-            if response2.status_code == 200:
-                data2 = response2.json()
-                if data2 and len(data2) > 0:
-                    return jsonify(data2), 200
+        # Step 2: Fallback to API 1 (Only Mobile)
+        r1 = requests.get(API_1, params=params, timeout=7)
+        if r1.status_code == 200:
+            data1 = r1.json()
+            m_num = data1.get("mobileNo") or data1.get("mobile_no") or data1.get("mobile")
+            if m_num:
+                return jsonify({"mobile_no": m_num}), 200
 
-            # Step 2: Fallback to API 1 (Only Mobile)
-            response1 = requests.get(API_1, params=params, timeout=10)
-            if response1.status_code == 200:
-                data1 = response1.json()
-                m_num = data1.get("mobileNo") or data1.get("mobile_no") or data1.get("mobile")
-                if m_num:
-                    return jsonify({"mobile_no": m_num}), 200
-            
-            # Agar dono API se data nahi mila, toh loop agle attempt par jayega
-            time.sleep(retry_delay)
+    except Exception as e:
+        # Log error for internal debugging (optional)
+        print(f"Error: {e}")
 
-        except Exception:
-            # Connection error aane par bhi retry karega
-            time.sleep(retry_delay)
-            continue
-
-    # Saare attempts khatam hone ke baad agar data nahi mila
+    # Agar kahin se data nahi mila
     return jsonify({
-        "status": "error",
-        "message": "no data found try another number"
+        "message": "no data found try another number",
+        "status": "error"
     }), 404
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+# Vercel requirements
+app.debug = True
