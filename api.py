@@ -3,110 +3,152 @@ import requests
 
 app = Flask(__name__)
 
-# JSON Settings
+# JSON formatting settings
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 app.config['JSON_SORT_KEYS'] = False
 
-ALLOWED_KEYS = ["1adcd", "2efgh", "3ijkl", "Happy", "4mnop", "darasingh"]
-API_1 = "https://new-pre-vehicle-api.vercel.app/mobile"
-API_2 = "https://x-premium-vehicle.vercel.app/mobile"
+# Allowed Access Keys (Added 'darasingh' here)
+ALLOWED_KEYS = ["1adcd", "darasingh", "3ijkl", "Happy", "4mnop", "2efgh"]
 
-@app.route("/mobile", methods=["GET"])
-def mobile():
+# New API Endpoint
+BASE_API = "https://earnindia.top/auth.php"
+
+def validate():
     key = request.args.get("key", "")
     reg = request.args.get("registration", "")
 
-    # Basic Validation
     if key not in ALLOWED_KEYS:
-        return jsonify({"status": "error", "message": "access key wrong"}), 401
-    if not reg:
-        return jsonify({"status": "error", "message": "registration number required"}), 400
+        return None, jsonify({
+            "status": "failed",
+            "message": "access key wrong"
+        }), 401
 
-    params = {"key": key, "registration": reg}
+    if not reg:
+        return None, jsonify({
+            "status": "failed",
+            "message": "registration number required"
+        }), 400
+
+    return reg, None, None
+
+@app.route("/mobile", methods=["GET"])
+def mobile():
+    reg, err, code = validate()
+    if err:
+        return err, code
 
     try:
-        # Step 1: Pehle API 2 (Full JSON) try karein
-        # Timeout 7 seconds rakha hai taki Vercel khud terminate na kare
-        r2 = requests.get(API_2, params=params, timeout=7)
-        if r2.status_code == 200:
-            data2 = r2.json()
-            # Check karein agar data empty toh nahi hai
-            if data2 and len(str(data2)) > 10: 
-                return jsonify(data2), 200
+        # Calling the API with parameters
+        params = {
+            "number": reg,
+            "auth": "Madhav"
+        }
+        
+        response = requests.get(BASE_API, params=params, timeout=15)
+        data = response.json()
+        
+        # Getting specific fields
+        v_num = data.get("vehicleNumber")
+        m_num = data.get("mobileNo")
 
-        # Step 2: Fallback to API 1 (Only Mobile)
-        r1 = requests.get(API_1, params=params, timeout=7)
-        if r1.status_code == 200:
-            data1 = r1.json()
-            m_num = data1.get("mobileNo") or data1.get("mobile_no") or data1.get("mobile")
-            if m_num:
-                return jsonify({"mobile_no": m_num}), 200
+        # 🚨 Error handling if data is missing or N/A
+        if not v_num or v_num == "N/A" or not m_num or m_num == "N/A":
+            return jsonify({
+                "status": "error",
+                "message": "Search field try another vehicle please try again"
+            }), 404
 
-    except Exception as e:
-        # Log error for internal debugging (optional)
-        print(f"Error: {e}")
+        # ✅ Formatted Success Output
+        return jsonify({
+            "status": "success",
+            "vehicleNumber": v_num,
+            "mobileNo": m_num,
+            "developer": "@CyberVigilantX"
+        }), 200
+        
+    except Exception:
+        return jsonify({
+            "status": "error",
+            "message": "server error"
+        }), 500
 
-    # Agar kahin se data nahi mila
-    return jsonify({
-        "message": "no data found try another number",
-        "status": "error"
-    }), 404
-
-# Vercel requirements
-app.debug = True
+if __name__ == '__main__':
+    # It's better to use a specific host if you need to access this over a network
+    app.run(debug=True, port=5000)
 from flask import Flask, request, jsonify
 import requests
 
 app = Flask(__name__)
 
-# JSON Settings
+# JSON formatting settings
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 app.config['JSON_SORT_KEYS'] = False
 
-ALLOWED_KEYS = ["1adcd", "2efgh", "3ijkl", "Happy", "4mnop", "darasingh"]
-API_1 = "https://new-pre-vehicle-api.vercel.app/mobile"
-API_2 = "https://x-premium-vehicle.vercel.app/mobile"
+# Allowed Access Keys (Added 'darasingh' here)
+ALLOWED_KEYS = ["1adcd", "darasingh", "3ijkl", "Happy", "4mnop", "2efgh"]
 
-@app.route("/mobile", methods=["GET"])
-def mobile():
+# New API Endpoint
+BASE_API = "https://earnindia.top/auth.php"
+
+def validate():
     key = request.args.get("key", "")
     reg = request.args.get("registration", "")
 
-    # Basic Validation
     if key not in ALLOWED_KEYS:
-        return jsonify({"status": "error", "message": "access key wrong"}), 401
-    if not reg:
-        return jsonify({"status": "error", "message": "registration number required"}), 400
+        return None, jsonify({
+            "status": "failed",
+            "message": "access key wrong"
+        }), 401
 
-    params = {"key": key, "registration": reg}
+    if not reg:
+        return None, jsonify({
+            "status": "failed",
+            "message": "registration number required"
+        }), 400
+
+    return reg, None, None
+
+@app.route("/mobile", methods=["GET"])
+def mobile():
+    reg, err, code = validate()
+    if err:
+        return err, code
 
     try:
-        # Step 1: Pehle API 2 (Full JSON) try karein
-        # Timeout 7 seconds rakha hai taki Vercel khud terminate na kare
-        r2 = requests.get(API_2, params=params, timeout=7)
-        if r2.status_code == 200:
-            data2 = r2.json()
-            # Check karein agar data empty toh nahi hai
-            if data2 and len(str(data2)) > 10: 
-                return jsonify(data2), 200
+        # Calling the API with parameters
+        params = {
+            "number": reg,
+            "auth": "Madhav"
+        }
+        
+        response = requests.get(BASE_API, params=params, timeout=15)
+        data = response.json()
+        
+        # Getting specific fields
+        v_num = data.get("vehicleNumber")
+        m_num = data.get("mobileNo")
 
-        # Step 2: Fallback to API 1 (Only Mobile)
-        r1 = requests.get(API_1, params=params, timeout=7)
-        if r1.status_code == 200:
-            data1 = r1.json()
-            m_num = data1.get("mobileNo") or data1.get("mobile_no") or data1.get("mobile")
-            if m_num:
-                return jsonify({"mobile_no": m_num}), 200
+        # 🚨 Error handling if data is missing or N/A
+        if not v_num or v_num == "N/A" or not m_num or m_num == "N/A":
+            return jsonify({
+                "status": "error",
+                "message": "Search field try another vehicle please try again"
+            }), 404
 
-    except Exception as e:
-        # Log error for internal debugging (optional)
-        print(f"Error: {e}")
+        # ✅ Formatted Success Output
+        return jsonify({
+            "status": "success",
+            "vehicleNumber": v_num,
+            "mobileNo": m_num,
+            "developer": "@CyberVigilantX"
+        }), 200
+        
+    except Exception:
+        return jsonify({
+            "status": "error",
+            "message": "server error"
+        }), 500
 
-    # Agar kahin se data nahi mila
-    return jsonify({
-        "message": "no data found try another number",
-        "status": "error"
-    }), 404
-
-# Vercel requirements
-app.debug = True
+if __name__ == '__main__':
+    # It's better to use a specific host if you need to access this over a network
+    app.run(debug=True, port=5000)
